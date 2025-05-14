@@ -1,6 +1,8 @@
 // Import the Express framework to create the server
 const express = require('express')
 
+const mongoose = require('mongoose')
+
 // Import CORS middleware to handle Cross-Origin Resource Sharing
 const cors = require('cors')
 
@@ -25,8 +27,12 @@ app.use(morgan('dev'))
 // Mount the API routes under the '/api' path, loading route definitions from the routes/index.js file
 app.use('/api', require('./routes/index'))
 
-// Define the port number from the environment or default to 5000
-const PORT = process.env.PORT || 5000
+// Define the port number from the environment or default to 7000
+const PORT = process.env.PORT || 7000
+const MONGOURI = process.env.MONGO_URI
 
 // Start the server and listen on the specified port
-app.listen(PORT, () => console.log(`Server running on port ${PORT}, API is Live!!!`))
+mongoose.connect(MONGOURI).then(() => {
+    app.listen(PORT)
+    console.log('API is Live')
+}).catch(() => console.log('Error connecting to the Database'))
