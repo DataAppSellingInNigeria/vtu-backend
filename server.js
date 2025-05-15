@@ -24,8 +24,12 @@ app.use(express.json())
 // Use Morgan to log HTTP requests in 'dev' format (method, URL, status, response time)
 app.use(morgan('dev'))
 
+const analyticsRoutes = require('./routes/analytics')
+
 // Mount the API routes under the '/api' path, loading route definitions from the routes/index.js file
 app.use('/api', require('./routes/index'))
+app.use('/api/admin/stats', analyticsRoutes)
+
 
 // Define the port number from the environment or default to 7000
 const PORT = process.env.PORT || 7000
