@@ -1,7 +1,9 @@
 const User = require('../models/User')
 const bcrypt = require('bcryptjs')
 const crypto = require('crypto')
-const { sendToken } = require('../utils/authUtils')
+const jwt = require('jsonwebtoken')
+const { generateToken, sendToken } = require('../utils/authUtils')
+const { sendEmail } = require('../utils/mailer')
 
 const register = async (req, res) => {
     const { name, email, phone, password, referrerCode } = req.body
@@ -26,10 +28,26 @@ const register = async (req, res) => {
         const hashed = await bcrypt.hash(password, 12)
         // const myReferralCode = phone
         const user = await User.create({ name, email, phone, password: hashed, referrerCode, myReferralCode })
+
+        const verifyToken = generateToken(user, '1d')
+        const verifyLink = `${process.env.CLIENT_URL}/verify-email/${verifyToken}`
+        await sendEmail(email, 'Verify your email', `<a href="${verifyLink}">Verify</a>`)
+
         sendToken(user, res)
     } catch (error) {
         res.status(500).json({ message: "Registration failed", error: error.message })
     }
+}
+
+const verifyEmail = async (req, res) => {
+    // try {
+        const decoded = jwt.verify(req.params.token, process.env.JWT_SECRET)
+        console.log(decoded)
+        await User.findByIdAndUpdate(decoded.id, { status: true })
+        res.json({ message: 'Email verified successfully' })
+    // } catch (err) {
+    //     res.status(400).json({ message: 'Invalid or expired verification link' })
+    // }
 }
 
 const login = async (req, res) => {
@@ -45,6 +63,8 @@ const login = async (req, res) => {
 
         const match = await bcrypt.compare(password, user.password)
         if (!match) return res.status(400).json({ message: 'Invalid credentials' })
+
+        if (!user.status) return res.status(403).json({ message: 'Account not verified. Please verify your email.' })
 
         sendToken(user, res)
     } catch (error) {
@@ -117,11 +137,33 @@ const updateUser = async (req, res) => {
     }
 }
 
+const forgotPassword = async (req, res) => {
+    const user = await User.findOne({ email: req.body.email })
+    if (!user) return res.status(404).json({ message: 'Email not found' })
 
+    const token = generateToken(user, '15m')
+    const resetLink = `${process.env.CLIENT_URL}/reset-password/${token}`
+    await sendEmail(user.email, 'Reset your password', `<a href="${resetLink}">Reset Password</a>`)
+    res.json({ message: 'Password reset email sent' })
+}
+
+const resetPassword = async (req, res) => {
+    try {
+        const decoded = jwt.verify(req.params.token, process.env.JWT_SECRET)
+        const hashed = await bcrypt.hash(req.body.password, 12)
+        await User.findByIdAndUpdate(decoded.id, { password: hashed })
+        res.json({ message: 'Password reset successful' })
+    } catch (err) {
+        res.status(400).json({ message: 'Invalid or expired token' })
+    }
+}
 
 module.exports = {
     register,
     login,
     profile,
-    updateUser
+    updateUser,
+    forgotPassword,
+    resetPassword,
+    verifyEmail
 }

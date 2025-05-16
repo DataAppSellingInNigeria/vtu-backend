@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
     password: String,
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     accountType: { type: String, enum: ['retail', 'reseller'], default: 'retail' },
-    status: { type: Boolean, default: true },
+    status: { type: Boolean, default: false },
     referrerCode: String,
     myReferralCode: String,
     totalReferralBonus: { type: Number, default: 0 },
