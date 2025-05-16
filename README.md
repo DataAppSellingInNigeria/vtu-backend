@@ -12,11 +12,14 @@ npm run dev
 
 ## 📁 Project Structure
 
-- `server.js`: Entry point
-- `routes/`: Route handlers
-- `controllers/`: Logic handlers
-- `models/`: Mongoose schema definitions
-- `config/`: DB and service configurations
+
+- `server.js`: Entry point of the application
+- `routes/`: Route handlers that map URLs to controller functions
+- `controllers/`: Contains business logic and API endpoint logic
+- `models/`: Mongoose schema definitions for MongoDB collections
+- `config/`: Configuration files (e.g., DB connection, environment setup)
+- `utils/`: Utility functions (e.g., token generation, email helpers)
+- `middlewares/`: Custom Express middleware (e.g., authentication, error handling)
 
 ## 🌐 VTU Authentication APIs
 
