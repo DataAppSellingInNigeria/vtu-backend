@@ -161,6 +161,146 @@ Resets the user's password using a valid reset token.
 }
 ```
 
+## 🌐 Wallet API
+
+This module handles wallet operations including auto-creation upon registration, credit/debit logic, and balance retrieval.
+
+### Base URL
+
+```
+http://localhost:8000/api/wallet
+```
+
+---
+
+### 1. Get Wallet Balance
+
+**GET** `/wallet/balance`
+
+**Description**: Retrieves the wallet balance for the authenticated user.
+
+**Headers**:
+- `Authorization: Bearer <JWT_TOKEN>`
+
+**Response**:
+```json
+{
+  "balance": 5000,
+  "frozen": 0
+}
+```
+
+---
+
+### 2. Credit Wallet
+
+**POST** `/wallet/credit`
+
+**Description**: Credits a specific amount to the user’s wallet.
+
+**Headers**:
+- `Authorization: Bearer <JWT_TOKEN>`
+- `Content-Type: application/json`
+
+**Request Body**:
+```json
+{
+  "amount": 2000,
+  "reference": "ref12345"
+}
+```
+
+**Response**:
+```json
+{
+  "message": "Wallet credited successfully",
+  "new_balance": 7000
+}
+```
+
+---
+
+### 3. Debit Wallet
+
+**POST** `/wallet/debit`
+
+**Description**: Debits a specific amount from the user’s wallet.
+
+**Headers**:
+- `Authorization: Bearer <JWT_TOKEN>`
+- `Content-Type: application/json`
+
+**Request Body**:
+```json
+{
+  "amount": 1000,
+  "reference": "ref67890"
+}
+```
+
+**Response**:
+```json
+{
+  "message": "Wallet debited successfully",
+  "new_balance": 6000
+}
+```
+
+---
+
+### 4. Freeze Wallet Funds
+
+**POST** `/wallet/freeze`
+
+**Description**: Temporarily locks a portion of the user’s balance.
+
+**Headers**:
+- `Authorization: Bearer <JWT_TOKEN>`
+- `Content-Type: application/json`
+
+**Request Body**:
+```json
+{
+  "amount": 1500
+}
+```
+
+**Response**:
+```json
+{
+  "message": "Funds frozen",
+  "frozen_amount": 1500
+}
+```
+
+---
+
+### 5. Unfreeze Wallet Funds
+
+**POST** `/wallet/unfreeze`
+
+**Description**: Releases previously frozen funds back to available balance.
+
+**Headers**:
+- `Authorization: Bearer <JWT_TOKEN>`
+- `Content-Type: application/json`
+
+**Request Body**:
+```json
+{
+  "amount": 1500
+}
+```
+
+**Response**:
+```json
+{
+  "message": "Funds unfrozen",
+  "available_balance": 6000
+}
+```
+
+
 ## 🚀 Start Server
 
 ```bash
