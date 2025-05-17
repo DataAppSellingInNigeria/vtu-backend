@@ -14,6 +14,12 @@ const userSchema = new mongoose.Schema({
     resellerEarnings: { type: Number, default: 0 }
 }, { timestamps: true })
 
+userSchema.post('findOneAndDelete', async function (doc) {
+    if (doc) {
+        await Wallet.deleteOne({ userId: doc._id })
+    }
+})
+
 const userModel = mongoose.model('User', userSchema)
 
 module.exports = userModel

@@ -11,7 +11,7 @@ const morgan = require('morgan')
 
 // Load environment variables from a .env file into process.env
 require('dotenv').config()
-const cookieParser = require('cookie-parser');
+const cookieParser = require('cookie-parser')
 
 
 // Create an instance of an Express application
@@ -23,8 +23,8 @@ app.use(cookieParser())
 app.use(cors())
 
 // Body parser middleware
-app.use(express.json()); // To parse JSON
-app.use(express.urlencoded({ extended: true })); // To parse form data
+app.use(express.json()) // To parse JSON
+app.use(express.urlencoded({ extended: true })) // To parse form data
 
 // Use Morgan to log HTTP requests in 'dev' format (method, URL, status, response time)
 app.use(morgan('dev'))
@@ -32,10 +32,12 @@ app.use(morgan('dev'))
 const index = require('./routes/index')
 const analyticsRoutes = require('./routes/analytics')
 const authRoutes = require('./routes/auth')
+const walletRoutes = require('./routes/wallet')
 
 // Mount the API routes under the '/api' path, loading route definitions from the routes/index.js file
 app.use('/api', index)
 app.use('/api/auth', authRoutes)
+app.use('/api/wallet', walletRoutes)
 app.use('/api/admin/stats', analyticsRoutes)
 
 // Define the port number from the environment or default to 7000

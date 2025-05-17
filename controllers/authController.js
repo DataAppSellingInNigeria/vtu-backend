@@ -1,4 +1,6 @@
 const User = require('../models/User')
+const Wallet = require('../models/Wallet')
+const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
 const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
@@ -12,42 +14,62 @@ const register = async (req, res) => {
         return res.status(400).json({ message: "Name, email, phone and password are required" });
     }
 
+    // const session = await mongoose.startSession()
+    // session.startTransaction()
+
     try {
         const myReferralCode = await generateUniqueReferralCode()
 
         const phoneExists = await checkPhone(phone)
         if (phoneExists) {
+            // await session.abortTransaction()
+            // session.endSession()
             return res.status(409).json({ message: "Phone number already in use" })
         }
 
         const emailExists = await checkEmail(email)
         if (emailExists) {
+            // await session.abortTransaction()
+            // session.endSession()
             return res.status(409).json({ message: "Email number already in use" })
         }
 
         const hashed = await bcrypt.hash(password, 12)
         // const myReferralCode = phone
-        const user = await User.create({ name, email, phone, password: hashed, referrerCode, myReferralCode })
+        const user = await User.create({ 
+            name, email, phone, password: hashed, referrerCode, myReferralCode 
+        })
 
+
+        // Auto-create wallet with 0 balance
+        await Wallet.create({ userId: user._id })
+
+        // // Commit transaction
+        // await session.commitTransaction()
+        // session.endSession()
+
+        // Send verification link and token
         const verifyToken = generateToken(user, '1d')
         const verifyLink = `${process.env.CLIENT_URL}/verify-email/${verifyToken}`
         await sendEmail(email, 'Verify your email', `<a href="${verifyLink}">Verify</a>`)
 
         sendToken(user, res)
     } catch (error) {
+        // await session.abortTransaction()
+        // session.endSession()
         res.status(500).json({ message: "Registration failed", error: error.message })
     }
 }
 
 const verifyEmail = async (req, res) => {
-    // try {
+    try {
         const decoded = jwt.verify(req.params.token, process.env.JWT_SECRET)
         console.log(decoded)
         await User.findByIdAndUpdate(decoded.id, { status: true })
         res.json({ message: 'Email verified successfully' })
-    // } catch (err) {
-    //     res.status(400).json({ message: 'Invalid or expired verification link' })
-    // }
+    } catch (err) {
+        res.status(400).json({ message: 'Invalid or expired verification link' })
+    }
 }
 
 const login = async (req, res) => {
