@@ -1,5 +1,7 @@
 const Withdrawal = require('../models/WithdrawalRequest')
 const Wallet = require('../models/Wallet')
+const User = require('../models/User')
+const { sendEmail } = require('../utils/mailer')
 
 // User requests withdrawal
 const requestWithdrawal = async (req, res) => {
@@ -18,6 +20,13 @@ const requestWithdrawal = async (req, res) => {
             userId: req.user.id,
             amount
         })
+
+        // Send alert to admin
+        await sendEmail(
+            process.env.ADMIN_EMAIL,
+            'New Withdrawal Request',
+            `<p>User ID: ${req.user.id}<br>Amount: ₦${amount}<br>Status: Pending</p>`
+        )
 
         res.json({ message: 'Withdrawal request submitted', request })
     } catch (err) {
@@ -46,6 +55,17 @@ const processWithdrawal = async (req, res) => {
         request.status = status
         request.adminNote = adminNote
         await request.save()
+
+        const user = await User.findById(request.userId)
+        const statusMsg = status === 'approved'
+            ? `Your withdrawal of ₦${request.amount} has been approved.`
+            : `Your withdrawal of ₦${request.amount} was rejected. Reason: ${adminNote}`
+
+        await sendEmail(
+            user.email,
+            `Withdrawal ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+            `<p>Hello ${user.name},</p><p>${statusMsg}</p>`
+        )
 
         res.json({ message: `Withdrawal ${status}`, request })
     } catch (err) {
