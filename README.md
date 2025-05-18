@@ -300,6 +300,95 @@ http://localhost:8000/api/wallet
 }
 ```
 
+## 🌐 Withdrawal Request API
+
+This API manages withdrawal requests from user wallets and includes both user and admin endpoints.
+
+### Base URL
+
+```
+http://localhost:8000/api/withdrawal
+```
+
+---
+
+### 1. Submit Withdrawal Request
+
+**POST** `/api/withdrawal`  
+Submits a new withdrawal request for the authenticated user.
+
+**Headers**:
+- `Authorization: Bearer <JWT_TOKEN>`
+- `Content-Type: application/json`
+
+**Request Body**:
+```json
+{
+  "amount": 5000
+}
+```
+
+**Notes**:
+- The specified amount is frozen from the user's wallet upon submission.
+
+---
+
+### 2. Get My Withdrawal Requests
+
+**GET** `/api/withdrawal/me`  
+Fetches all withdrawal requests submitted by the authenticated user.
+
+**Headers**:
+- `Authorization: Bearer <JWT_TOKEN>`
+
+**Response Example**:
+```json
+[
+  {
+    "id": "1",
+    "amount": 5000,
+    "status": "pending",
+    "createdAt": "2025-05-17T08:30:00Z"
+  }
+]
+```
+
+---
+
+### 3. Get All Withdrawal Requests (Admin Only)
+
+**GET** `/api/withdrawal`  
+Retrieves all withdrawal requests across all users.
+
+**Headers**:
+- `Authorization: Bearer <ADMIN_JWT>`
+
+**Notes**:
+- Admin access only.
+- Includes user data with each request.
+
+---
+
+### 4. Update Withdrawal Request Status (Admin Only)
+
+**PUT** `/api/withdrawal/:id`  
+Approves or rejects a withdrawal request.
+
+**Headers**:
+- `Authorization: Bearer <ADMIN_JWT>`
+- `Content-Type: application/json`
+
+**Request Body**:
+```json
+{
+  "status": "approved",
+  "adminNote": "Processed successfully"
+}
+```
+
+**Notes**:
+- Performs wallet debit/unfreeze based on status.
+- Sends email notification to the user.
 
 ## 🚀 Start Server
 
