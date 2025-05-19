@@ -33,12 +33,14 @@ const index = require('./routes/index')
 const analyticsRoutes = require('./routes/analytics')
 const authRoutes = require('./routes/auth')
 const walletRoutes = require('./routes/wallet')
+const paystackRoutes = require('./routes/paystack')
 
 // Mount the API routes under the '/api' path, loading route definitions from the routes/index.js file
 app.use('/api', index)
 app.use('/api/auth', authRoutes)
 app.use('/api/wallet', walletRoutes)
 app.use('/api/admin/stats', analyticsRoutes)
+app.use('/api/paystack', paystackRoutes)
 
 // Define the port number from the environment or default to 7000
 const PORT = process.env.PORT || 7000
