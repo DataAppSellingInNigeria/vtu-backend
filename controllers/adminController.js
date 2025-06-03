@@ -1,7 +1,7 @@
 const Transaction = require('../models/Transaction')
 const mongoose = require('mongoose')
 
-exports.getFilteredTransactions = async (req, res) => {
+const getFilteredTransactions = async (req, res) => {
     try {
         const { type, userId, startDate, endDate, status } = req.query
 
@@ -28,3 +28,5 @@ exports.getFilteredTransactions = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error' })
     }
 }
+
+module.exports = getFilteredTransactions

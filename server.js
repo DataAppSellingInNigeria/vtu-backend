@@ -34,6 +34,7 @@ const analyticsRoutes = require('./routes/analytics')
 const authRoutes = require('./routes/auth')
 const walletRoutes = require('./routes/wallet')
 const paystackRoutes = require('./routes/paystack')
+const transactionRoutes = require('./routes/transaction')
 const errorHandler = require('./middlewares/errorHandler')
 
 // Mount the API routes under the '/api' path, loading route definitions from the routes/index.js file
@@ -42,6 +43,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/wallet', walletRoutes)
 app.use('/api/admin/stats', analyticsRoutes)
 app.use('/api/paystack', paystackRoutes)
+app.use('/api/transaction-logs', transactionRoutes)
 app.use(errorHandler)
 
 // Define the port number from the environment or default to 7000
