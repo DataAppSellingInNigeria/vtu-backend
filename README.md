@@ -499,6 +499,63 @@ Fetches filtered transaction logs (admin only).
 
 ---
 
+### 5. GET `/api/admin/users`
+
+**Description**: Retrieve a list of all registered users (admin-only).
+
+**Headers**:
+- Authorization: Bearer <admin_token>
+
+**Response**:
+```json
+{
+  "success": true,
+  "users": [
+    {
+      "_id": "64cde45678fbb4",
+      "name": "Hassan Bello",
+      "email": "hassan@example.com",
+      "phone": "08123456789",
+      "role": "user",
+      "createdAt": "2024-05-01T08:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### 6. GET `/api/admin/transactions`
+
+**Description**: Retrieve a list of all transactions on the platform.
+
+**Headers**:
+- Authorization: Bearer <admin_token>
+
+**Response**:
+```json
+{
+  "success": true,
+  "transactions": [
+    {
+      "_id": "trxn001",
+      "userId": {
+        "name": "Hassan Bello",
+        "email": "hassan@example.com"
+      },
+      "refId": "TX12345",
+      "type": "wallet_funding",
+      "service": "Paystack",
+      "amount": 5000,
+      "status": "success",
+      "createdAt": "2024-06-01T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
 ## 📌 Best Practices
 
 - Limit result set to 100 or paginate

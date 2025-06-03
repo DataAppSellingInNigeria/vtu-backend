@@ -14,7 +14,7 @@ const verifyJWT = (req, res, next) => {
 }
 
 const checkRole = role => (req, res, next) => {
-    if (req.user.role !== role) return res.status(403).json({ message: 'Access denied' })
+    if (req.user.role !== role) return res.status(403).json({ message: 'Admin access required' })
     next()
 }
 

@@ -1,4 +1,5 @@
 const Transaction = require('../models/Transaction')
+const User = require('../models/User')
 
 const getUserTransactions = async (req, res) => {
     const transactions = await Transaction.find({ userId: req.user._id }).sort({ timestamp: -1 })
@@ -33,7 +34,31 @@ const getFilteredTransactions = async (req, res) => {
     }
 }
 
+const getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find().sort({ createdAt: -1 }).select('-password')
+        res.status(200).json({ success: true, users })
+    } catch (error) {
+        console.error('Admin fetch users error:', error)
+        res.status(500).json({ success: false, message: 'Error fetching users' })
+    }
+}
+
+const getAllTransactions = async (req, res) => {
+    try {
+        const transactions = await Transaction.find()
+            .sort({ createdAt: -1 })
+            .populate('userId', 'name email')
+        res.status(200).json({ success: true, transactions })
+    } catch (error) {
+        console.error('Admin fetch transactions error:', error)
+        res.status(500).json({ success: false, message: 'Error fetching transactions' })
+    }
+}
+
 module.exports = {
     getUserTransactions,
-    getFilteredTransactions
+    getFilteredTransactions,
+    getAllUsers,
+    getAllTransactions
 }
