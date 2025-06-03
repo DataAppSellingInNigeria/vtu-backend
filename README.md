@@ -397,7 +397,7 @@ This module handles transaction logging for user payments, wallet funding, VTU a
 ### Base URL
 
 ```
-http://localhost:8000/api
+http://localhost:8000/api/transaction-logs
 ```
 
 ---
@@ -441,7 +441,7 @@ All are stored in the `transactions` collection.
 
 ### 3. View Transaction History (User)
 
-**GET** `/transactions`  
+**GET** `/`  
 Returns all transactions belonging to the authenticated user.
 
 **Headers**:
