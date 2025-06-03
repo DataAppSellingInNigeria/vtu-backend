@@ -525,7 +525,7 @@ Fetches filtered transaction logs (admin only).
 
 ---
 
-### 6. GET `/api/admin/transactions`
+### 6. GET `/api/admin/transactions/all`
 
 **Description**: Retrieve a list of all transactions on the platform.
 
@@ -562,6 +562,105 @@ Fetches filtered transaction logs (admin only).
 - Add indexes on `refId`, `createdAt`, and `userId`
 - Log only errors with stack trace for performance
 - Encrypt sensitive user context (if applicable)
+
+# 📲 Services Module – Airtime API
+
+This module handles the logic for airtime purchases through integrated VTU providers like Dorosub or VTpass.
+
+## ✅ Features
+
+- Secure airtime purchase for authenticated users
+- Validates wallet balance before purchase
+- Calls third-party VTU provider (e.g., Dorosub)
+- Debits wallet and logs transaction on success
+- Uses middleware for JWT protection
+
+---
+
+## 🧾 Endpoint
+
+### POST `/api/airtime`
+
+**Description**: Send airtime to a phone number using the user's wallet balance.
+
+### 🔐 Authentication
+
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+
+---
+
+## 📥 Request Body
+
+```json
+{
+  "network": "MTN",
+  "phone": "08012345678",
+  "amount": 100
+}
+```
+
+| Field    | Type   | Required | Description                      |
+|----------|--------|----------|----------------------------------|
+| network  | String | ✅ Yes   | Network name (e.g., MTN, GLO)    |
+| phone    | String | ✅ Yes   | Recipient phone number           |
+| amount   | Number | ✅ Yes   | Airtime amount (NGN)             |
+
+---
+
+## 📤 Sample Success Response
+
+```json
+{
+  "message": "Airtime sent successfully",
+  "data": {
+    "ref": "TX123456789",
+    "status": "success",
+    "network": "MTN",
+    "amount": 100,
+    "phone": "08012345678"
+  }
+}
+```
+
+---
+
+## 🔄 Process Flow
+
+1. Client submits airtime request.
+2. Backend verifies JWT and fetches user.
+3. Wallet balance is checked.
+4. VTU provider is called via API.
+5. On success:
+   - Wallet is debited
+   - Transaction is logged
+6. Response is sent to user
+
+---
+
+## 📁 Files Involved
+
+- `routes/airtime.js` – Route definition
+- `controllers/airtimeController.js` – Purchase logic
+- `services/vtuService.js` – External VTU API integration
+- `utils/transactionLogger.js` – Reusable logging function
+
+---
+
+## 🔐 Middleware Used
+
+- `verifyJWT` – Validates access token
+- `wallet.balance` – Checked before purchase
+
+---
+
+## ✅ Deliverables
+
+- [x] Airtime API Route
+- [x] Wallet Validation
+- [x] VTU Integration
+- [x] Transaction Logging
 
 ## 🚀 Start Server
 
