@@ -8,7 +8,7 @@ const { generateToken, sendToken } = require('../utils/authUtils')
 const { sendEmail } = require('../utils/mailer')
 
 const register = async (req, res) => {
-    const { name, email, phone, password, referrerCode } = req.body
+    const { name, email, phone, password, referrerCode, role } = req.body
 
     if (!name || !email || !phone || !password) {
         return res.status(400).json({ message: "Name, email, phone and password are required" });
@@ -18,8 +18,6 @@ const register = async (req, res) => {
     // session.startTransaction()
 
     try {
-        const myReferralCode = await generateUniqueReferralCode()
-
         const phoneExists = await checkPhone(phone)
         if (phoneExists) {
             // await session.abortTransaction()
@@ -31,14 +29,21 @@ const register = async (req, res) => {
         if (emailExists) {
             // await session.abortTransaction()
             // session.endSession()
-            return res.status(409).json({ message: "Email number already in use" })
+            return res.status(409).json({ message: "Email address already in use" })
         }
 
+        const myReferralCode = await generateUniqueReferralCode()
+
         const hashed = await bcrypt.hash(password, 12)
+
+        const userData = {
+            name, email, phone, password: hashed, referrerCode, myReferralCode, role
+        }
+        if (role) userData.role = role
+
+
         // const myReferralCode = phone
-        const user = await User.create({ 
-            name, email, phone, password: hashed, referrerCode, myReferralCode 
-        })
+        const user = await User.create(userData)
 
 
         // Auto-create wallet with 0 balance
@@ -137,15 +142,21 @@ const updateUser = async (req, res) => {
             return res.status(403).json({ message: "Unauthorized to update this user." })
         }
 
-        const { name, phone, email } = req.body
+        const { name, phone, email, role } = req.body
+        updateFields = {}
 
-        if (!name || !phone || !email) {
-            return res.status(400).json({ message: "All fields are required." })
-        }
+        if (name) updateFields.name = name
+        if (phone) updateFields.phone = phone
+        if (email) updateFields.email = email
+        if (role) updateFields.role = role
+
+        // if (!name || !phone || !email) {
+        //     return res.status(400).json({ message: "All fields are required." })
+        // }
 
         const updatedUser = await User.findByIdAndUpdate(
             id,
-            { name, phone, email },
+            updateFields,
             { new: true, runValidators: true }
         );
 
