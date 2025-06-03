@@ -390,6 +390,122 @@ Approves or rejects a withdrawal request.
 - Performs wallet debit/unfreeze based on status.
 - Sends email notification to the user.
 
+## 🌐 Transaction Logging & Monitoring
+
+This module handles transaction logging for user payments, wallet funding, VTU actions, and error logging. It also provides admin-level filtered transaction access.
+
+### Base URL
+
+```
+http://localhost:8000/api
+```
+
+---
+
+### 1. Log a Transaction Automatically
+
+Transactions are automatically logged during:
+- Wallet funding via Paystack webhook
+- Airtime/Data/Cable/Electricity/Exam PIN purchases
+- Withdrawal approvals
+
+**Fields Logged**:
+- `refId`: Unique reference ID (e.g., Paystack or transaction ID)
+- `type`: Type of transaction (`wallet_funding`, `airtime`, `data`, etc.)
+- `status`: `pending`, `success`, or `failed`
+- `amount`: Amount involved
+- `service`: Service or provider name (e.g., MTN, DSTV)
+- `timestamp`: Auto-assigned by MongoDB
+- `userId`: User performing the action
+
+All are stored in the `transactions` collection.
+
+---
+
+### 2. Centralized Error Logging
+
+**Purpose**: Capture all runtime errors and track system behavior.
+
+**Collection**: `logs`
+
+**Fields**:
+- `level`: Log severity (`info`, `warn`, `error`)
+- `message`: Summary of the event or error
+- `context`: Route, user, or action context
+- `stackTrace`: Stack trace for debugging (errors only)
+- `timestamp`: Log creation time
+
+**Auto-trigger**: via centralized Express middleware using `next(err)`
+
+---
+
+### 3. View Transaction History (User)
+
+**GET** `/transactions`  
+Returns all transactions belonging to the authenticated user.
+
+**Headers**:
+- `Authorization: Bearer <JWT_TOKEN>`
+
+**Response**:
+```json
+[
+  {
+    "type": "wallet_funding",
+    "amount": 5000,
+    "status": "success",
+    "service": "Paystack",
+    "timestamp": "2024-06-03T12:00:00.000Z"
+  }
+]
+```
+
+---
+
+### 4. View Admin Filtered Transaction List
+
+**GET** `/admin/transactions`  
+Fetches filtered transaction logs (admin only).
+
+**Query Parameters**:
+- `type`: (optional) `wallet_funding`, `airtime`, etc.
+- `status`: (optional) `success`, `pending`, `failed`
+- `userId`: (optional) Filter by user ID
+- `startDate`: (optional) `YYYY-MM-DD`
+- `endDate`: (optional) `YYYY-MM-DD`
+
+**Headers**:
+- `Authorization: Bearer <ADMIN_JWT>`
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "refId": "TXN98765",
+      "type": "airtime",
+      "status": "success",
+      "userId": {
+        "name": "Aisha Bello",
+        "email": "aisha@example.com"
+      },
+      "amount": 200,
+      "createdAt": "2024-06-01T08:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+## 📌 Best Practices
+
+- Limit result set to 100 or paginate
+- Add indexes on `refId`, `createdAt`, and `userId`
+- Log only errors with stack trace for performance
+- Encrypt sensitive user context (if applicable)
+
 ## 🚀 Start Server
 
 ```bash

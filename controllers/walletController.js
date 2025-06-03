@@ -21,9 +21,19 @@ const creditWallet = async (req, res) => {
     res.json({ message: 'Wallet credited', balance: wallet.balance })
 }
 
+const freezeWallet = async (req, res) => {
+    res.json("Wallet Freeze")
+}
+
+const unfreezeWallet = async (req, res) => {
+    res.json("Wallet UnFreeze")
+}
+
 
 module.exports = {
     getWallet,
     debitWallet,
-    creditWallet
+    creditWallet,
+    freezeWallet,
+    unfreezeWallet
 }

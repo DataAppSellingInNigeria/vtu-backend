@@ -1,4 +1,5 @@
 const { initializePayment } = require('../utils/paystack')
+const { logTransaction } = require('../utils/transaction')
 const Wallet = require('../models/Wallet')
 
 const payment = async (req, res) => {
@@ -26,6 +27,15 @@ const webhook = async (req, res) => {
 
         const wallet = await Wallet.findOne({ userId })
         await wallet.credit(amount)
+
+        await logTransaction({
+            userId: userId,
+            refId: paystackRef,
+            type: 'wallet_funding',
+            service: 'Paystack',
+            amount,
+            response: paystackResponse
+        })
     }
 
     res.sendStatus(200)
