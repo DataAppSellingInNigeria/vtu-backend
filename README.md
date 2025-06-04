@@ -499,9 +499,10 @@ Fetches filtered transaction logs (admin only).
 
 ---
 
-### 5. GET `/api/admin/users`
+### 5. Retrieve all Users
 
-**Description**: Retrieve a list of all registered users (admin-only).
+**GET** `/admin/users`
+Retrieve a list of all registered users (admin-only).
 
 **Headers**:
 - Authorization: Bearer <admin_token>
@@ -525,9 +526,10 @@ Fetches filtered transaction logs (admin only).
 
 ---
 
-### 6. GET `/api/admin/transactions/all`
+### 6. List of all transactions
 
-**Description**: Retrieve a list of all transactions on the platform.
+**GET** `/admin/transactions/all`
+Retrieve a list of all transactions on the platform.
 
 **Headers**:
 - Authorization: Bearer <admin_token>
@@ -563,25 +565,60 @@ Fetches filtered transaction logs (admin only).
 - Log only errors with stack trace for performance
 - Encrypt sensitive user context (if applicable)
 
-# 📲 Services Module – Airtime API
+# 📲 Services Module – VTU APIs (Data, Airtime & Utilities)
 
-This module handles the logic for airtime purchases through integrated VTU providers like Dorosub or VTpass.
+This module provides APIs that allow users to purchase **mobile data**, **airtime**, and **utility services** (such as TV subscriptions and electricity tokens) through integrated VTU (Virtual Top-Up) providers like **Dorosub** and **VTpass**. It ensures secure, wallet-based transactions and logs all successful purchases.
+
+---
 
 ## ✅ Features
 
+### 🔹 Mobile Data API
+- Purchase mobile data using wallet balance
+- Dynamically fetch available data bundle plans by network
+- Integrate with VTU providers (e.g., Dorosub, VTpass)
+- Log each successful data transaction
+
+### 🔹 Airtime API
 - Secure airtime purchase for authenticated users
-- Validates wallet balance before purchase
-- Calls third-party VTU provider (e.g., Dorosub)
-- Debits wallet and logs transaction on success
-- Uses middleware for JWT protection
+- Validates wallet balance before initiating purchase
+- Connects to third-party VTU providers to complete purchase
+- Debits wallet and logs transaction on successful top-up
+- Uses middleware for JWT-based authentication
+
+### 🔹 Utility Top-up API (TV, Electricity, etc.)
+- Support for TV subscriptions (e.g., DStv, GOtv, Startimes)
+- Purchase electricity tokens using meter number and provider
+- Validate service parameters before processing
+- Deducts wallet balance and logs utility transactions
+- Integrates with third-party APIs (e.g., Dorosub, VTpass)
+
+---
+
+## 🔐 Security
+- All endpoints are protected using JWT middleware to ensure only authenticated users can initiate transactions.
+
+---
+
+## 📦 Integrations
+- **VTU Providers:** Currently supports Dorosub and VTpass, with a modular structure that allows easy integration of additional providers in the future.
+
+---
+
+### Base URL
+
+```
+http://localhost:8000/api/services
+```
 
 ---
 
 ## 🧾 Endpoint
 
-### POST `/api/airtime`
+### Purchase Airtime
 
-**Description**: Send airtime to a phone number using the user's wallet balance.
+**POST** `/airtime`
+Send airtime to a phone number using the user's wallet balance.
 
 ### 🔐 Authentication
 
@@ -641,10 +678,10 @@ Authorization: Bearer <JWT_TOKEN>
 
 ## 📁 Files Involved
 
-- `routes/airtime.js` – Route definition
-- `controllers/airtimeController.js` – Purchase logic
-- `services/vtuService.js` – External VTU API integration
-- `utils/transactionLogger.js` – Reusable logging function
+- `routes/service.js` – Route definition
+- `controllers/serviceController.js` – Purchase logic
+- `utils/vtuService.js` – External VTU API integration
+- `utils/transaction.js` – Reusable logging function
 
 ---
 
@@ -658,6 +695,97 @@ Authorization: Bearer <JWT_TOKEN>
 ## ✅ Deliverables
 
 - [x] Airtime API Route
+- [x] Wallet Validation
+- [x] VTU Integration
+- [x] Transaction Logging
+
+
+### 2. POST `/data`
+
+**Description**: Purchases a data plan for a specified number.
+
+#### Headers
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+
+#### Body Parameters
+```json
+{
+  "network": "MTN",
+  "phone": "08012345678",
+  "planCode": "mtn-1gb-daily",
+  "amount": 300
+}
+```
+
+#### Response
+```json
+{
+  "message": "Data purchase successful",
+  "data": {
+    "ref": "TX123456",
+    "status": "success",
+    "network": "MTN",
+    "amount": 300,
+    "phone": "08012345678"
+  }
+}
+```
+
+---
+
+### 3. Fetch Data Plans
+
+**GET** `/data/plans/:network`
+Fetches all available data plans for a specific network (e.g., MTN, GLO).
+
+#### Example
+```
+GET /api/services/data/plans/MTN
+Authorization: Bearer <JWT_TOKEN>
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "plans": [
+    {
+      "code": "mtn-1gb-daily",
+      "price": 300,
+      "validity": "1 day",
+      "volume": "1GB"
+    },
+    ...
+  ]
+}
+```
+
+---
+
+## 🔄 Functions Explained
+
+| Function           | Purpose                                  | Usage                                   |
+|--------------------|------------------------------------------|-----------------------------------------|
+| `fetchDataPlans`   | Get available data bundles by network    | Frontend: for populating dropdown lists |
+| `sendDataPurchase` | Trigger actual VTU data delivery         | Backend: after purchase form submitted  |
+
+---
+
+## 📁 Files Involved
+
+- `routes/data.js` – Endpoint definitions
+- `controllers/dataController.js` – Main logic
+- `services/vtuService.js` – Handles VTU provider requests
+- `utils/transactionLogger.js` – Stores logs in DB
+
+---
+
+## ✅ Deliverables
+
+- [x] Data Plan Fetch API
+- [x] Data Purchase API
 - [x] Wallet Validation
 - [x] VTU Integration
 - [x] Transaction Logging
