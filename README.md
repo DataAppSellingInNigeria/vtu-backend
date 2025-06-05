@@ -593,6 +593,14 @@ This module provides APIs that allow users to purchase **mobile data**, **airtim
 - Deducts wallet balance and logs utility transactions
 - Integrates with third-party APIs (e.g., Dorosub, VTpass)
 
+## ✅ Features
+
+- Verify electricity meter (optional)
+- Pay electricity bill using wallet balance
+- Debit wallet and log transaction
+- Integration with third-party VTU providers
+- JWT-protected endpoints
+
 ---
 
 ## 🔐 Security
@@ -700,9 +708,10 @@ Authorization: Bearer <JWT_TOKEN>
 - [x] Transaction Logging
 
 
-### 2. POST `/data`
+### 2. Purchase Data
 
-**Description**: Purchases a data plan for a specified number.
+**POST** `/data`
+Purchases a data plan for a specified number.
 
 #### Headers
 ```
@@ -789,6 +798,109 @@ Authorization: Bearer <JWT_TOKEN>
 - [x] Wallet Validation
 - [x] VTU Integration
 - [x] Transaction Logging
+
+---
+
+### 4. Verify Meter Number
+
+**POST** `/api/services/electricity/verify`
+Optionally verify a meter number before bill payment.
+
+#### Headers
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+
+#### Body Parameters
+```json
+{
+  "disco": "ikeja-electric",
+  "meter_number": "12345678901",
+  "meter_type": "prepaid"
+}
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "data": {
+    "customer_name": "John Doe",
+    "meter_verified": true
+  }
+}
+```
+
+---
+
+### 5. Purchase Electricity
+
+**POST** `/api/services/electricity`
+Pays an electricity bill to a verified meter using the user's wallet.
+
+#### Headers
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+
+#### Body Parameters
+```json
+{
+  "disco": "ikeja-electric",
+  "meter_number": "12345678901",
+  "meter_type": "prepaid",
+  "amount": 1000
+}
+```
+
+#### Response
+```json
+{
+  "message": "Electricity bill paid successfully",
+  "data": {
+    "ref": "ELEC-TX123",
+    "status": "success",
+    "disco": "ikeja-electric",
+    "amount": 1000
+  }
+}
+```
+
+---
+
+## 🔄 Process Flow
+
+1. User may optionally verify meter number.
+2. User submits payment form.
+3. Backend checks wallet balance.
+4. VTU provider is called for transaction.
+5. On success:
+   - Wallet is debited
+   - Transaction is logged
+6. User receives confirmation
+
+---
+
+## 📁 Files Involved
+
+- `routes/electricity.js` – Endpoint definitions
+- `controllers/electricityController.js` – Verification and payment logic
+- `services/vtuService.js` – Handles API requests to electricity providers
+- `utils/transactionLogger.js` – Logs billing events
+
+---
+
+## ✅ Deliverables
+
+- [x] Meter Verification API
+- [x] Electricity Payment API
+- [x] Wallet Validation
+- [x] VTU Provider Integration
+- [x] Transaction Logging
+
+---
+
+
 
 ## 🚀 Start Server
 

@@ -1,10 +1,12 @@
 const Wallet = require('../models/Wallet')
 const { logTransaction } = require('../utils/transaction')
-const { 
+const {
     sendAirtimeRequest,
     sendDataPurchase,
-    fetchDataPlans
- } = require('../utils/vtuService')
+    fetchDataPlans,
+    verifyMeterWithProvider,
+    payBillToProvider
+} = require('../utils/vtuService')
 
 const purchaseAirtime = async (req, res) => {
     const { network, phone, amount } = req.body
@@ -104,8 +106,62 @@ const getDataPlans = async (req, res) => {
     }
 }
 
+const verifyMeter = async (req, res) => {
+    const { disco, meter_number, meter_type } = req.body
+
+    try {
+        const result = await verifyMeterWithProvider({ disco, meter_number, meter_type })
+        res.status(200).json({ success: true, data: result })
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Verification failed', error: err.message })
+    }
+}
+
+const payElectricityBill = async (req, res) => {
+    const { disco, meter_number, meter_type, amount } = req.body
+    const userId = req.user.id
+
+    if (!disco || !meter_number || !meter_type || !amount) {
+        return res.status(400).json({ message: 'Missing required fields' })
+    }
+
+    try {
+        const wallet = await Wallet.findOne({ userId })
+
+        if (!wallet || wallet.balance < amount) {
+            return res.status(400).json({ message: 'Insufficient wallet balance' })
+        }
+
+        const vtuResponse = await payBillToProvider({ disco, meter_number, meter_type, amount })
+
+        if (vtuResponse.status !== 'success') {
+            return res.status(502).json({ message: 'VTU provider failed', error: vtuResponse })
+        }
+
+        wallet.balance -= amount;
+        await wallet.save();
+
+        await logTransaction({
+            userId,
+            refId: vtuResponse.ref || vtuResponse.reference || 'N/A',
+            type: 'electricity',
+            service: disco,
+            amount,
+            status: 'success',
+            response: vtuResponse
+        })
+
+        res.status(200).json({ message: 'Electricity bill paid successfully', data: vtuResponse })
+
+    } catch (err) {
+        res.status(500).json({ message: 'Server error', error: err.message })
+    }
+}
+
 module.exports = {
     purchaseAirtime,
     purchaseData,
-    getDataPlans
+    getDataPlans,
+    payElectricityBill,
+    verifyMeter
 }

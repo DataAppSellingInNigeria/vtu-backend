@@ -45,8 +45,39 @@ const fetchDataPlans = async (network) => {
     return res.data.data || []
 }
 
+const verifyMeterWithProvider = async ({ disco, meter_number, meter_type }) => {
+    const API_KEY = process.env.VTU_API_KEY
+    const URL = 'https://dorosub.com/api/electricity/verify'
+
+    const res = await axios.post(URL, {
+        api_key: API_KEY,
+        disco,
+        meter_number,
+        meter_type
+    })
+
+    return res.data
+}
+
+const payBillToProvider = async ({ disco, meter_number, meter_type, amount }) => {
+    const API_KEY = process.env.VTU_API_KEY
+    const URL = 'https://dorosub.com/api/electricity'
+
+    const res = await axios.post(URL, {
+        api_key: API_KEY,
+        disco,
+        meter_number,
+        meter_type,
+        amount
+    })
+
+    return res.data
+}
+
 module.exports = {
     sendAirtimeRequest,
     sendDataPurchase,
-    fetchDataPlans
+    fetchDataPlans,
+    verifyMeterWithProvider,
+    payBillToProvider
 }
