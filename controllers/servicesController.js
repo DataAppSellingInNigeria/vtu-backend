@@ -5,7 +5,8 @@ const {
     sendDataPurchase,
     fetchDataPlans,
     verifyMeterWithProvider,
-    payBillToProvider
+    payBillToProvider,
+    sendCableRecharge
 } = require('../utils/vtuService')
 
 const purchaseAirtime = async (req, res) => {
@@ -158,10 +159,52 @@ const payElectricityBill = async (req, res) => {
     }
 }
 
+const rechargeCable = async (req, res) => {
+    const { provider, smartcard, bouquet, amount } = req.body
+    const userId = req.user.id
+
+    if (!provider || !smartcard || !bouquet || !amount) {
+        return res.status(400).json({ message: 'Missing required fields' })
+    }
+
+    try {
+        const wallet = await Wallet.findOne({ userId })
+
+        if (!wallet || wallet.balance < amount) {
+            return res.status(400).json({ message: 'Insufficient wallet balance' })
+        }
+
+        const response = await sendCableRecharge({ provider, smartcard, bouquet, amount })
+
+        if (response.status !== 'success') {
+            return res.status(502).json({ message: 'Recharge failed', error: response })
+        }
+
+        wallet.balance -= amount
+        await wallet.save()
+
+        await logTransaction({
+            userId,
+            refId: response.ref || response.reference || 'N/A',
+            type: 'cable',
+            service: provider,
+            amount,
+            status: 'success',
+            response
+        })
+
+        res.status(200).json({ message: 'Cable subscription successful', data: response })
+
+    } catch (err) {
+        res.status(500).json({ message: 'Server error', error: err.message })
+    }
+}
+
 module.exports = {
     purchaseAirtime,
     purchaseData,
     getDataPlans,
     payElectricityBill,
-    verifyMeter
+    verifyMeter,
+    rechargeCable
 }

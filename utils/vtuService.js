@@ -63,15 +63,38 @@ const payBillToProvider = async ({ disco, meter_number, meter_type, amount }) =>
     const API_KEY = process.env.VTU_API_KEY
     const URL = 'https://dorosub.com/api/electricity'
 
-    const res = await axios.post(URL, {
-        api_key: API_KEY,
-        disco,
-        meter_number,
-        meter_type,
-        amount
-    })
+    try {
+        const res = await axios.post(URL, {
+            api_key: API_KEY,
+            disco,
+            meter_number,
+            meter_type,
+            amount
+        })
+    
+        return res.data
+    } catch (err) {
+        return { status: 'failed', error: err.message }
+    }
+}
 
-    return res.data
+const sendCableRecharge = async ({ provider, smartcard, bouquet, amount }) => {
+    const API_KEY = process.env.VTU_API_KEY
+    const URL = 'https://dorosub.com/api/cable'
+
+    try {
+        const res = await axios.post(URL, {
+            api_key: API_KEY,
+            provider,
+            smartcard,
+            bouquet,
+            amount
+        })
+    
+        return res.data
+    } catch (err) {
+        return { status: 'failed', error: err.message }
+    }
 }
 
 module.exports = {
@@ -79,5 +102,6 @@ module.exports = {
     sendDataPurchase,
     fetchDataPlans,
     verifyMeterWithProvider,
-    payBillToProvider
+    payBillToProvider,
+    sendCableRecharge
 }

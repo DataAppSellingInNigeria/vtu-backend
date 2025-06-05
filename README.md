@@ -601,6 +601,13 @@ This module provides APIs that allow users to purchase **mobile data**, **airtim
 - Integration with third-party VTU providers
 - JWT-protected endpoints
 
+## ✅ Features
+
+- Recharge DSTV/GOTV subscriptions
+- Wallet balance validation and debit
+- Transaction logging
+- Integration with third-party VTU provider (e.g., Dorosub)
+- 
 ---
 
 ## 🔐 Security
@@ -900,7 +907,69 @@ Authorization: Bearer <JWT_TOKEN>
 
 ---
 
+### 6. Recharge DSTV/GOTV etc
 
+**POST** `/api/cable`
+Recharges a smart card for DSTV or GOTV with a selected bouquet.
+
+#### Headers
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+
+#### Body Parameters
+```json
+{
+  "provider": "DSTV",
+  "smartcard": "1234567890",
+  "bouquet": "dstv-padi",
+  "amount": 2500
+}
+```
+
+#### Response
+```json
+{
+  "message": "Cable subscription successful",
+  "data": {
+    "ref": "DSTV-TX123",
+    "status": "success",
+    "provider": "DSTV",
+    "smartcard": "1234567890",
+    "bouquet": "dstv-padi"
+  }
+}
+```
+
+---
+
+## 🔄 Process Flow
+
+1. User selects provider, smart card, bouquet.
+2. Backend checks wallet balance.
+3. Calls VTU provider to process recharge.
+4. On success:
+   - Debits wallet
+   - Logs transaction
+5. Returns confirmation
+
+---
+
+## 📁 Files Involved
+
+- `routes/cable.js` – Endpoint definition
+- `controllers/cableController.js` – Subscription logic
+- `services/vtuService.js` – External VTU integration
+- `utils/transactionLogger.js` – Stores logs in MongoDB
+
+---
+
+## ✅ Deliverables
+
+- [x] Cable Recharge API
+- [x] Wallet Validation
+- [x] VTU Provider Integration
+- [x] Transaction Logging
 
 ## 🚀 Start Server
 

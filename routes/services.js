@@ -6,7 +6,8 @@ const {
     purchaseData,
     getDataPlans,
     payElectricityBill,
-    verifyMeter
+    verifyMeter,
+    rechargeCable 
  } = require('../controllers/servicesController')
 
 router.post('/airtime', verifyJWT, purchaseAirtime)
@@ -14,5 +15,6 @@ router.post('/data', verifyJWT, purchaseData)
 router.get('/data/plans/:network', verifyJWT, getDataPlans) // dynamic plan fetch
 router.post('/electricity', verifyJWT, payElectricityBill);
 router.post('/electricity/verify/meter', verifyJWT, verifyMeter); // Optional
+router.post('/cable', verifyJWT, rechargeCable)
 
 module.exports = router
