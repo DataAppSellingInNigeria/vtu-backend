@@ -1,4 +1,5 @@
 const Wallet = require('../models/Wallet')
+const Pin = require('../models/Pin')
 const { logTransaction } = require('../utils/transaction')
 const {
     sendAirtimeRequest,
@@ -6,7 +7,8 @@ const {
     fetchDataPlans,
     verifyMeterWithProvider,
     payBillToProvider,
-    sendCableRecharge
+    sendCableRecharge,
+    fetchExamPin
 } = require('../utils/vtuService')
 
 const purchaseAirtime = async (req, res) => {
@@ -200,11 +202,65 @@ const rechargeCable = async (req, res) => {
     }
 }
 
+const purchaseExamPin = async (req, res) => {
+    const { service, amount } = req.body
+    const userId = req.user.id
+
+    try {
+        const wallet = await Wallet.findOne({ userId })
+        if (!wallet || wallet.balance < amount) {
+            return res.status(400).json({ message: 'Insufficient balance' })
+        }
+
+        const response = await fetchExamPin({ service })
+
+        if (!response.success || !response.pin) {
+            return res.status(502).json({ message: 'PIN purchase failed', error: response })
+        }
+
+        wallet.balance -= amount
+        await wallet.save()
+
+        await Pin.create({
+            userId,
+            service,
+            code: response.pin,
+            refId: response.ref,
+            status: 'delivered'
+        })
+
+        await logTransaction({
+            userId,
+            refId: response.ref,
+            type: 'pin',
+            service,
+            amount,
+            status: 'success',
+            response
+        })
+
+        res.status(200).json({
+            message: 'PIN purchased successfully',
+            pin: response.pin
+        })
+
+    } catch (err) {
+        res.status(500).json({ message: 'Server error', error: err.message })
+    }
+}
+
+const getPurchasedPins = async (req, res) => {
+    const pins = await Pin.find({ userId: req.user._id }).sort({ createdAt: -1 })
+    res.json({ pins })
+}
+
 module.exports = {
     purchaseAirtime,
     purchaseData,
     getDataPlans,
     payElectricityBill,
     verifyMeter,
-    rechargeCable
+    rechargeCable,
+    purchaseExamPin,
+    getPurchasedPins
 }

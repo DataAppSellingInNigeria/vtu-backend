@@ -607,7 +607,15 @@ This module provides APIs that allow users to purchase **mobile data**, **airtim
 - Wallet balance validation and debit
 - Transaction logging
 - Integration with third-party VTU provider (e.g., Dorosub)
-- 
+
+## ✅ Features
+
+- Purchase exam PINs via VTU provider
+- Deduct amount from wallet
+- Save PIN securely in database
+- View previously purchased PINs
+- JWT-protected endpoints
+
 ---
 
 ## 🔐 Security
@@ -810,7 +818,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ### 4. Verify Meter Number
 
-**POST** `/api/services/electricity/verify`
+**POST** `/electricity/verify`
 Optionally verify a meter number before bill payment.
 
 #### Headers
@@ -842,7 +850,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ### 5. Purchase Electricity
 
-**POST** `/api/services/electricity`
+**POST** `/electricity`
 Pays an electricity bill to a verified meter using the user's wallet.
 
 #### Headers
@@ -909,7 +917,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ### 6. Recharge DSTV/GOTV etc
 
-**POST** `/api/cable`
+**POST** `/cable`
 Recharges a smart card for DSTV or GOTV with a selected bouquet.
 
 #### Headers
@@ -970,6 +978,92 @@ Authorization: Bearer <JWT_TOKEN>
 - [x] Wallet Validation
 - [x] VTU Provider Integration
 - [x] Transaction Logging
+
+---
+
+### 7. Purchase Exam PIN
+
+**POST** `/purchase-pin`
+Purchases an exam PIN for a selected exam type.
+
+#### Headers
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+
+#### Body Parameters
+```json
+{
+  "service": "waec",
+  "amount": 1500
+}
+```
+
+#### Response
+```json
+{
+  "message": "PIN purchased successfully",
+  "pin": "WAEC-PIN-9823748392"
+}
+```
+
+---
+
+### 2. Retrieve Purchased PIN
+
+**GET** `/api/purchased-pins`
+Fetches all previously purchased PINs by the authenticated user.
+
+#### Headers
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+
+#### Response
+```json
+{
+  "pins": [
+    {
+      "_id": "6601234567",
+      "service": "waec",
+      "code": "WAEC-PIN-9823748392",
+      "status": "delivered",
+      "createdAt": "2025-06-04T10:00:00.000Z"
+    },
+    ...
+  ]
+}
+```
+
+---
+
+## 🔄 Process Flow
+
+1. User selects exam type and submits payment form.
+2. Backend checks wallet balance and deducts amount.
+3. Calls VTU provider to fetch PIN.
+4. Saves PIN in DB and returns to user.
+5. Logs transaction.
+
+---
+
+## 📁 Files Involved
+
+- `routes/pin.js` – API routing
+- `controllers/pinController.js` – PIN purchase and listing logic
+- `models/Pin.js` – MongoDB schema for storing PINs
+- `services/vtuService.js` – VTU API integration
+- `utils/transactionLogger.js` – Tracks PIN-related transactions
+
+---
+
+## ✅ Deliverables
+
+- [x] PIN Purchase API
+- [x] Wallet Validation
+- [x] VTU Provider Integration
+- [x] Transaction Logging
+- [x] PIN History Endpoint
 
 ## 🚀 Start Server
 
