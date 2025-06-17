@@ -1,12 +1,14 @@
 const Wallet = require('../models/Wallet')
 const Pin = require('../models/Pin')
 const { logTransaction } = require('../utils/transaction')
+const request_id = require('../utils/generateID')
 const {
     sendAirtimeRequest,
     sendDataPurchase,
-    fetchDataPlans,
+    fetchPlans,
     verifyMeterWithProvider,
     payBillToProvider,
+    queryTransaction,
     sendCableRecharge,
     fetchExamPin
 } = require('../utils/vtuService')
@@ -27,7 +29,7 @@ const purchaseAirtime = async (req, res) => {
         }
 
         // 1. Call VTU API provider
-        const vtuResponse = await sendAirtimeRequest({ network, phone, amount })
+        const vtuResponse = await sendAirtimeRequest({ request_id, network, phone, amount })
 
         if (vtuResponse.status !== 'success') {
             return res.status(500).json({ message: 'VTU provider failed', error: vtuResponse })
@@ -40,7 +42,7 @@ const purchaseAirtime = async (req, res) => {
         // 3. Log transaction
         await logTransaction({
             userId,
-            refId: vtuResponse.ref || vtuResponse.reference || 'N/A',
+            refId: vtuResponse.ref || vtuResponse.reference || vtuResponse.requestId || request_id,
             type: 'airtime',
             service: network,
             amount,
@@ -57,10 +59,10 @@ const purchaseAirtime = async (req, res) => {
 }
 
 const purchaseData = async (req, res) => {
-    const { network, phone, planCode, amount } = req.body
+    const { serviceID, billersCode, variation_code, phone, amount } = req.body
     const userId = req.user.id
 
-    if (!network || !phone || !planCode || !amount) {
+    if (!serviceID || !billersCode || !variation_code || !phone || !amount) {
         return res.status(400).json({ message: 'Missing required fields' })
     }
 
@@ -72,7 +74,7 @@ const purchaseData = async (req, res) => {
         }
 
         // VTU API call
-        const vtuResponse = await sendDataPurchase({ network, phone, planCode })
+        const vtuResponse = await sendDataPurchase({ request_id, serviceID, billersCode, variation_code, phone })
 
         if (vtuResponse.status !== 'success') {
             return res.status(502).json({ message: 'VTU provider failed', error: vtuResponse })
@@ -98,11 +100,11 @@ const purchaseData = async (req, res) => {
     }
 }
 
-const getDataPlans = async (req, res) => {
+const getPlans = async (req, res) => {
     const { network } = req.params
 
     try {
-        const plans = await fetchDataPlans(network)
+        const plans = await fetchPlans(network)
         res.status(200).json({ success: true, plans })
     } catch (err) {
         res.status(500).json({ message: 'Error fetching plans', error: err.message })
@@ -110,10 +112,10 @@ const getDataPlans = async (req, res) => {
 }
 
 const verifyMeter = async (req, res) => {
-    const { disco, meter_number, meter_type } = req.body
+    const { meter_number, serviceID, meter_type } = req.body
 
     try {
-        const result = await verifyMeterWithProvider({ disco, meter_number, meter_type })
+        const result = await verifyMeterWithProvider({ meter_number, serviceID, meter_type })
         res.status(200).json({ success: true, data: result })
     } catch (err) {
         res.status(500).json({ success: false, message: 'Verification failed', error: err.message })
@@ -121,10 +123,10 @@ const verifyMeter = async (req, res) => {
 }
 
 const payElectricityBill = async (req, res) => {
-    const { disco, meter_number, meter_type, amount } = req.body
+    const { serviceID, meter_number, meter_type, amount, phone } = req.body
     const userId = req.user.id
 
-    if (!disco || !meter_number || !meter_type || !amount) {
+    if (!serviceID || !meter_number || !meter_type || !amount || !phone) {
         return res.status(400).json({ message: 'Missing required fields' })
     }
 
@@ -135,7 +137,7 @@ const payElectricityBill = async (req, res) => {
             return res.status(400).json({ message: 'Insufficient wallet balance' })
         }
 
-        const vtuResponse = await payBillToProvider({ disco, meter_number, meter_type, amount })
+        const vtuResponse = await payBillToProvider({ request_id, serviceID, meter_number, meter_type, amount, phone })
 
         if (vtuResponse.status !== 'success') {
             return res.status(502).json({ message: 'VTU provider failed', error: vtuResponse })
@@ -161,11 +163,28 @@ const payElectricityBill = async (req, res) => {
     }
 }
 
+const checkTransaction = async (req, res) => {
+    const { request_id } = req.body
+
+    if (!request_id) {
+        return res.status(400).json({ message: 'Missing required fields' })
+    }
+
+    try {
+        const response = await queryTransaction(request_id)
+
+        res.status(200).json({ success: true, data: response })
+    } catch (err) {
+        res.status(500).json({ message: 'Server error', error: err.message })
+    }
+}
+
 const rechargeCable = async (req, res) => {
-    const { provider, smartcard, bouquet, amount } = req.body
+    const { serviceID, billersCode, variation_code, amount } = req.body
+    
     const userId = req.user.id
 
-    if (!provider || !smartcard || !bouquet || !amount) {
+    if (!serviceID || !billersCode || !variation_code || !amount) {
         return res.status(400).json({ message: 'Missing required fields' })
     }
 
@@ -176,7 +195,7 @@ const rechargeCable = async (req, res) => {
             return res.status(400).json({ message: 'Insufficient wallet balance' })
         }
 
-        const response = await sendCableRecharge({ provider, smartcard, bouquet, amount })
+        const response = await sendCableRecharge({ request_id, serviceID, billersCode, variation_code, amount })
 
         if (response.status !== 'success') {
             return res.status(502).json({ message: 'Recharge failed', error: response })
@@ -203,7 +222,7 @@ const rechargeCable = async (req, res) => {
 }
 
 const purchaseExamPin = async (req, res) => {
-    const { service, amount } = req.body
+    const { variation_code, amount, quantity, phone } = req.body
     const userId = req.user.id
 
     try {
@@ -212,7 +231,7 @@ const purchaseExamPin = async (req, res) => {
             return res.status(400).json({ message: 'Insufficient balance' })
         }
 
-        const response = await fetchExamPin({ service })
+        const response = await fetchExamPin({ request_id, variation_code, amount, quantity, phone })
 
         if (!response.success || !response.pin) {
             return res.status(502).json({ message: 'PIN purchase failed', error: response })
@@ -257,9 +276,10 @@ const getPurchasedPins = async (req, res) => {
 module.exports = {
     purchaseAirtime,
     purchaseData,
-    getDataPlans,
+    getPlans,
     payElectricityBill,
     verifyMeter,
+    checkTransaction,
     rechargeCable,
     purchaseExamPin,
     getPurchasedPins

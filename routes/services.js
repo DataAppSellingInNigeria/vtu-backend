@@ -4,21 +4,24 @@ const { verifyJWT } = require('../middlewares/auth')
 const { 
     purchaseAirtime,
     purchaseData,
-    getDataPlans,
+    getPlans,
     payElectricityBill,
     verifyMeter,
+    cablePlans,
     rechargeCable,
     purchaseExamPin,
-    getPurchasedPins
+    getPurchasedPins,
+    checkTransaction
  } = require('../controllers/servicesController')
 
+ router.get('/plans/:network', verifyJWT, getPlans) // take only 1 b/w getDataPlans and cablePlans, It can also work for Exams Pin
 router.post('/airtime', verifyJWT, purchaseAirtime)
 router.post('/data', verifyJWT, purchaseData)
-router.get('/data/plans/:network', verifyJWT, getDataPlans) // dynamic plan fetch
-router.post('/electricity', verifyJWT, payElectricityBill);
-router.post('/electricity/verify/meter', verifyJWT, verifyMeter); // Optional
+router.post('/electricity', verifyJWT, payElectricityBill)
+router.post('/electricity/verify/meter', verifyJWT, verifyMeter)
+router.post('/transaction/status', verifyJWT, checkTransaction) // check transaction for airtime, data, electricity and cables 
 router.post('/cable', verifyJWT, rechargeCable)
-router.post('/purchase-pin', verifyJWT, purchaseExamPin);
+router.post('/purchase-pin', verifyJWT, purchaseExamPin)
 router.get('/purchased-pins', verifyJWT, getPurchasedPins)
 
 module.exports = router

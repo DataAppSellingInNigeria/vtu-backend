@@ -1,35 +1,44 @@
 const axios = require('axios')
 
-const sendAirtimeRequest = async ({ network, phone, amount }) => {
-    const API_KEY = process.env.VTU_API_KEY;
-    const VTU_URL = 'https://dorosub.com/api/airtime'
-
-    console.log(process.env.VTU_API_KEY)
+const sendAirtimeRequest = async ({ request_id, serviceID, phone, amount }) => {
+    const VTU_URL = `${process.env.VTU_API_URI}/pay`
 
     try {
         const res = await axios.post(VTU_URL, {
-            api_key: API_KEY,
-            network,
+            auth: {
+                username: process.env.VTU_USERNAME,
+                password: process.env.VTU_PASSWORD
+            }
+        },
+        {
+            request_id,
+            serviceID,
             phone,
             amount
         })
 
         return res.data
-    } catch (error) {
-        return { status: 'failed', error: error.message }
+    } catch (err) {
+        return { status: 'failed', error: err.message }
     }
 }
 
-const sendDataPurchase = async ({ network, phone, planCode }) => {
-    const API_KEY = process.env.VTU_API_KEY
-    const VTU_URL = 'https://dorosub.com/api/data'
+const sendDataPurchase = async ({ request_id, serviceID, billersCode, variation_code, phone }) => {
+    const VTU_URL = `${process.env.VTU_API_URI}/pay`
 
     try {
         const res = await axios.post(VTU_URL, {
-            api_key: API_KEY,
-            network,
-            mobile_number: phone,
-            plan: planCode
+            auth: {
+                username: process.env.VTU_USERNAME,
+                password: process.env.VTU_PASSWORD
+            }
+        },
+        {
+            request_id,
+            serviceID,
+            billersCode,
+            variation_code,
+            phone
         })
 
         return res.data
@@ -38,37 +47,104 @@ const sendDataPurchase = async ({ network, phone, planCode }) => {
     }
 }
 
-const fetchDataPlans = async (network) => {
-    const VTU_URL = `https://dorosub.com/api/data/plans?network=${network}&api_key=${process.env.VTU_API_KEY}`
+const fetchPlans = async (network) => {
+    const VTU_URL = `${process.env.VTU_API_URI}/service-variations?serviceID=${network}`
 
-    const res = await axios.get(VTU_URL)
-    return res.data.data || []
+    try {
+        const res = await axios.get(VTU_URL, {
+            auth: {
+                username: process.env.VTU_USERNAME,
+                password: process.env.VTU_PASSWORD
+            }
+        })
+        return res.data
+    } catch (err) {
+        return { status: 'failed', error: err.message }
+    }
 }
 
-const verifyMeterWithProvider = async ({ disco, meter_number, meter_type }) => {
-    const API_KEY = process.env.VTU_API_KEY
-    const URL = 'https://dorosub.com/api/electricity/verify'
-
-    const res = await axios.post(URL, {
-        api_key: API_KEY,
-        disco,
-        meter_number,
-        meter_type
-    })
-
-    return res.data
-}
-
-const payBillToProvider = async ({ disco, meter_number, meter_type, amount }) => {
-    const API_KEY = process.env.VTU_API_KEY
-    const URL = 'https://dorosub.com/api/electricity'
+const verifyMeterWithProvider = async ({ billersCode, serviceID, type }) => {
+    const URL = `${process.env.VTU_API_URI}/merchant-verify`
 
     try {
         const res = await axios.post(URL, {
-            api_key: API_KEY,
-            disco,
-            meter_number,
-            meter_type,
+            auth: {
+                username: process.env.VTU_USERNAME,
+                password: process.env.VTU_PASSWORD
+            }
+        },
+        {
+            billersCode,
+            serviceID,
+            type
+        })
+    
+        return res.data
+    } catch (err) {
+        return { status: 'failed', error: err.message }
+    }
+}
+
+const payBillToProvider = async ({ request_id, serviceID, billersCode, variation_code, amount, phone }) => {
+    const URL = `${process.env.VTU_API_URI}/pay`
+
+    try {
+        const res = await axios.post(URL, {
+            auth: {
+                username: process.env.VTU_USERNAME,
+                password: process.env.VTU_PASSWORD
+            }
+        },
+        {
+            request_id,
+            serviceID,
+            billersCode,
+            variation_code,
+            amount,
+            phone
+        })
+
+        return res.data
+    } catch (err) {
+        return { status: 'failed', error: err.message }
+    }
+}
+
+const queryTransaction = async request_id => {
+    const URL = `${process.env.VTU_API_URI}/requery`
+
+    try {
+        const res = await axios.post(URL, {
+            auth: {
+                username: process.env.VTU_USERNAME,
+                password: process.env.VTU_PASSWORD
+            }
+        },
+        { request_id })
+        
+        return res.data
+    } catch (err) {
+        return { status: 'failed', error: err.message }
+    }
+
+}
+
+const sendCableRecharge = async ({ request_id, serviceID, billersCode, variation_code, amount }) => {
+    const URL = `${process.env.VTU_API_URI}/pay`
+    console.log(request_id)
+
+    try {
+        const res = await axios.post(URL, {
+            auth: {
+                username: process.env.VTU_USERNAME,
+                password: process.env.VTU_PASSWORD
+            }
+        },
+        {
+            request_id,
+            serviceID,
+            billersCode,
+            variation_code,
             amount
         })
 
@@ -78,32 +154,21 @@ const payBillToProvider = async ({ disco, meter_number, meter_type, amount }) =>
     }
 }
 
-const sendCableRecharge = async ({ provider, smartcard, bouquet, amount }) => {
-    const API_KEY = process.env.VTU_API_KEY
-    const URL = 'https://dorosub.com/api/cable'
+const fetchExamPin = async ({ request_id, variation_code, amount, quantity, phone }) => {
 
     try {
-        const res = await axios.post(URL, {
-            api_key: API_KEY,
-            provider,
-            smartcard,
-            bouquet,
-            amount
-        })
-
-        return res.data
-    } catch (err) {
-        return { status: 'failed', error: err.message }
-    }
-}
-
-const fetchExamPin = async ({ service }) => {
-    const VTU_API = process.env.VTU_API_KEY
-
-    try {
-        const res = await axios.post('https://dorosub.com/api/pin', {
-            api_key: VTU_API,
-            service
+        const res = await axios.post(`${process.env.VTU_API_URI}/pay`, {
+            auth: {
+                username: process.env.VTU_USERNAME,
+                password: process.env.VTU_PASSWORD
+            }
+        },
+        {
+            request_id,
+            variation_code,
+            amount,
+            quantity,
+            phone
         })
     
         return res.data
@@ -115,9 +180,10 @@ const fetchExamPin = async ({ service }) => {
 module.exports = {
     sendAirtimeRequest,
     sendDataPurchase,
-    fetchDataPlans,
+    fetchPlans,
     verifyMeterWithProvider,
     payBillToProvider,
+    queryTransaction,
     sendCableRecharge,
     fetchExamPin
 }
